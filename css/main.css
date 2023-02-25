@@ -8,8 +8,8 @@
     min-width: 25px;
 } */
 
-wrapper {
-    min-width:900px;
+body {
+    min-width: 1200px
 }
 
 .cell {

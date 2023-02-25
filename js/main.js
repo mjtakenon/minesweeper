@@ -8,7 +8,7 @@ window.addEventListener("load",() => {
 
 class MineSweeper {
 
-    color = [
+    CELL_COLOR = [
         "#EEEEEE",
         "blue",
         "green",
@@ -19,6 +19,14 @@ class MineSweeper {
         "black",
         "gray",
     ]
+
+    MAX_WIDTH = 50
+    MAX_HEIGHT = 50
+    MAX_MINES = 999
+
+    MIN_WIDTH = 10
+    MIN_HEIGHT = 10
+    MIN_MINES = 10
 
     constructor() 
     {
@@ -32,8 +40,9 @@ class MineSweeper {
     init() 
     {
         this.reset()
-        let parameter = this.readParameter()
-        this.create(parameter)
+        this.readParameter()
+        this.validateParameter()
+        this.create()
     }
     
     reset() 
@@ -52,19 +61,42 @@ class MineSweeper {
         let mines = document.getElementById("mines_input").value
         let width = document.getElementById("width_input").value
         let height = document.getElementById("height_input").value
-        let parameter = new FieldParameter(mines, width, height)
-        return parameter
+        this.parameter = new FieldParameter(mines, width, height)
+    }
+
+    validateParameter()
+    {
+        let isInvalid = false
+        if (this.parameter.width < this.MIN_WIDTH || this.parameter.width > this.MAX_WIDTH || Number.isNaN(this.parameter.width)) {
+            alert("Invalid number of width.")
+        }
+
+        if (this.parameter.height < this.MIN_HEIGHT || this.parameter.height > this.MAX_HEIGHT || Number.isNaN(this.parameter.height)) {
+            alert("Invalid number of height.")
+        }
+
+        if (this.parameter.mines < this.MIN_MINES || this.parameter.mines > this.MAX_MINES || Number.isNaN(this.parameter.mines)) {
+            alert("Invalid number of mines.")
+        }
+
+        if (this.parameter.mines >= this.parameter.width * this.parameter.height) {
+            alert("The number of mines must be less than cells.")
+        }
+
+        if (isInvalid) {
+            throw new Error("Invalid Parameters.")
+        }
     }
     
-    create(parameter) 
+    create() 
     {
         let field = document.createElement("div")
         field.setAttribute("id", "field")
     
         let game = document.createElement("table")
-        for (let y=0; y<parameter.height; y++) {
+        for (let y=0; y<this.parameter.height; y++) {
             let tr = document.createElement("tr")
-            for (let x=0; x<parameter.width; x++) {
+            for (let x=0; x<this.parameter.width; x++) {
                 let td = document.createElement("td")
                 td.appendChild(document.createTextNode(""))
                 td.setAttribute("class", "button cell")
@@ -79,15 +111,32 @@ class MineSweeper {
         field.appendChild(game)
         document.getElementById("game").appendChild(field)
     
-        this.cells = this.generateCells(parameter)
-        this.isOpened = this.generate2dArray(parameter.width, parameter.height, false)
-        this.isFlagged = this.generate2dArray(parameter.width, parameter.height, false)
+        this.cells = this.generateCells(this.parameter)
+        this.isOpened = this.generate2dArray(this.parameter.width, this.parameter.height, false)
+        this.isFlagged = this.generate2dArray(this.parameter.width, this.parameter.height, false)
     }
     
     clickCell(e) 
     {
         let point = Point.fromString(e.target.getAttribute("id"))
         
+        if (!this.isOpened.flat().includes(true)) {
+            if (this.cells[point.y][point.x] === Cell.MINE) {
+                let numberCells = []
+                for (let y=0; y<this.cells.length; y++) {
+                    for (let x=0; x<this.cells[y].length; x++) {
+                        if (this.cells[y][x] !== Cell.MINE) {
+                            numberCells.push(new Point(x, y))
+                        }
+                    }
+                }
+                let targetCell = numberCells[this.getRandomInt(numberCells.length)]
+                this.cells[targetCell.y][targetCell.x] = Cell.MINE
+                this.cells[point.y][point.x] = 0
+                this.setNumbers(this.cells)
+            }
+        }
+
         if (this.isOpened[point.y][point.x]) {
             return
         }
@@ -155,16 +204,16 @@ class MineSweeper {
             return openTargetCells = this.openCells(openTargetCells)
         }
 
-        if (this.cells[point.y][point.x] === "m") {
+        if (this.cells[point.y][point.x] === Cell.MINE) {
             cell.appendChild(document.createTextNode("💣"))
         } else {
             cell.appendChild(document.createTextNode(this.cells[point.y][point.x]))
         }
-        cell.style.color = this.color[this.cells[point.y][point.x]]
+        cell.style.color = this.CELL_COLOR[this.cells[point.y][point.x]]
         cell.style.backgroundColor = "#EEEEEE"
         this.isOpened[point.y][point.x] = true
 
-        if (this.cells[point.y][point.x] === "m") {
+        if (this.cells[point.y][point.x] === Cell.MINE) {
             this.gameover()
             return []
         }
@@ -187,29 +236,25 @@ class MineSweeper {
         return openTargetCells = this.openCells(openTargetCells)
     }
 
-    generateCells(parameter) 
+    generateCells() 
     {
-        let cells = this.generate2dArray(parameter.width, parameter.height, 0)
+        let cells = this.generate2dArray(this.parameter.width, this.parameter.height, 0)
         
-        let mines = this.generateMines(parameter)
+        let mines = this.generateMines(this.parameter)
         cells = this.setMines(cells, mines)
         cells = this.setNumbers(cells)
         return cells
     }
 
-    generateMines(parameter) 
+    generateMines() 
     {
-        if (parameter.mines > parameter.width * parameter.height) {
-            throw new Error('mines number invalid');
-        }
-
         let mines = []
 
-        for (let n=0; n < parameter.mines; n++) {
+        for (let n=0; n < this.parameter.mines; n++) {
             let point = null
 
             do {
-                point = (new Point(this.getRandomInt(parameter.width), this.getRandomInt(parameter.height))).toString()
+                point = (new Point(this.getRandomInt(this.parameter.width), this.getRandomInt(this.parameter.height))).toString()
             } while((mines.includes(point)))
 
             mines.push(point)
@@ -221,7 +266,7 @@ class MineSweeper {
     setMines(cells, mines) 
     {
         for (let mine of mines) {
-            cells[mine.y][mine.x] = "m"
+            cells[mine.y][mine.x] = Cell.MINE
         }
 
         return cells
@@ -231,7 +276,7 @@ class MineSweeper {
     {
         for (let y=0; y<cells.length; y++) {
             for (let x=0; x<cells[y].length; x++) {
-                if (cells[y][x] === "m") {
+                if (cells[y][x] === Cell.MINE) {
                     continue
                 }
                 cells[y][x] = this.countMines(cells, x, y).toString()
@@ -250,7 +295,7 @@ class MineSweeper {
                     continue
                 }
 
-                if (cells[p.y][p.x] === "m") {
+                if (cells[p.y][p.x] === Cell.MINE) {
                     count += 1
                 }
             }
@@ -280,10 +325,10 @@ class MineSweeper {
     {
         for (let y=0; y<this.cells.length; y++) {
             for (let x=0; x<this.cells[y].length; x++) {
-                if (this.cells[y][x] !== "m" && !this.isOpened[y][x]) {
+                if (this.cells[y][x] !== Cell.MINE && !this.isOpened[y][x]) {
                     return false
                 }
-                if (this.cells[y][x] === "m" && this.isOpened[y][x]) {
+                if (this.cells[y][x] === Cell.MINE && this.isOpened[y][x]) {
                     return false
                 }
             }
@@ -294,7 +339,7 @@ class MineSweeper {
     clear() {
         for (let y=0; y<this.cells.length; y++) {
             for (let x=0; x<this.cells[y].length; x++) {
-                if (this.cells[y][x] === "m") {
+                if (this.cells[y][x] === Cell.MINE) {
                     this.setCellFlag(new Point(x, y))
                 }
             }
@@ -308,11 +353,11 @@ class MineSweeper {
     gameover() {
         for (let y=0; y<this.cells.length; y++) {
             for (let x=0; x<this.cells[y].length; x++) {
-                if (this.cells[y][x] === "m" && !this.isOpened[y][x]) {
+                if (this.cells[y][x] === Cell.MINE && !this.isOpened[y][x]) {
                     this.setCellString(new Point(x, y), "💣")
                 }
 
-                if (this.cells[y][x] !== "m" && this.isFlagged[y][x]) {
+                if (this.cells[y][x] !== Cell.MINE && this.isFlagged[y][x]) {
                     this.setCellString(new Point(x, y), "❌")
                 }
             }
@@ -367,7 +412,7 @@ class Field {
 }
 
 class Cell {
-
+    MINE = "mine"
 }
 
 class Point {
