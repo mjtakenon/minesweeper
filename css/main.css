@@ -19,4 +19,10 @@ wrapper {
     max-height: 35px;
     padding: 0px;
     margin: 0px;
+    font-family: 'Tilt Warp', cursive;
 }
+
+.cell:hover {
+    background-color: #FFFFBB;
+}
+

@@ -8,6 +8,18 @@ window.addEventListener("load",() => {
 
 class MineSweeper {
 
+    color = [
+        "#EEEEEE",
+        "blue",
+        "green",
+        "red",
+        "darkblue",
+        "maroon",
+        "teal",
+        "black",
+        "gray",
+    ]
+
     constructor() 
     {
         document.getElementById("reset_button").addEventListener("click", () => {
@@ -26,9 +38,12 @@ class MineSweeper {
     
     reset() 
     {
-        let field = document.getElementById("field")
-        if (field !== null) {
-            field.remove()
+        let elements = ["field", "clear-notification", "gameover-notification"]
+        for (let element of elements) {
+            let el = document.getElementById(element)
+            if (el !== null) {
+                el.remove()
+            }
         }
     }
     
@@ -79,6 +94,10 @@ class MineSweeper {
 
         let openTargetCells = [point.toString()]
         this.openCells(openTargetCells)
+
+        if (this.isCleared()) {
+            this.clear()
+        }
     }
 
     rightClickCell(e) 
@@ -89,27 +108,31 @@ class MineSweeper {
             return
         }
 
-        let cell = document.getElementById(point.toString())
-
         if (this.isFlagged[point.y][point.x]) {
-            let td = document.createElement("td")
-            let tr = cell.parentNode
-
-            td.appendChild(document.createTextNode(""))
-            td.setAttribute("class", "button cell")
-            td.setAttribute("id", (new Point(point.x, point.y)).toString())
-            td.addEventListener("click", (e) => {this.clickCell(e)})
-            td.oncontextmenu = (e) => {this.rightClickCell(e); return false}
-            cell.after(td)
-            cell.remove()
-
+            this.clearFlag(point)
             this.isFlagged[point.y][point.x] = false
         } else {
-            cell.appendChild(document.createTextNode("🏁"))
-            this.isFlagged[point.y][point.x] = true
+            this.setFlag(point)
         }
     }
-
+    
+    setFlag(point) {
+        let cell = document.getElementById(point.toString())
+        cell.appendChild(document.createTextNode("🚩"))
+        this.isFlagged[point.y][point.x] = true
+    }
+    
+    clearFlag(point) {
+        let cell = document.getElementById(point.toString())
+        let td = document.createElement("td")
+        td.appendChild(document.createTextNode(""))
+        td.setAttribute("class", "button cell")
+        td.setAttribute("id", (new Point(point.x, point.y)).toString())
+        td.addEventListener("click", (e) => {this.clickCell(e)})
+        td.oncontextmenu = (e) => {this.rightClickCell(e); return false}
+        cell.after(td)
+        cell.remove()
+    }
 
     openCells(openTargetCells) 
     {
@@ -124,13 +147,18 @@ class MineSweeper {
             return openTargetCells = this.openCells(openTargetCells)
         }
 
-        cell.appendChild(document.createTextNode(this.cells[point.y][point.x]))
-        
+        if (this.cells[point.y][point.x] === "m") {
+            cell.appendChild(document.createTextNode("💣"))
+        } else {
+            cell.appendChild(document.createTextNode(this.cells[point.y][point.x]))
+        }
+        cell.style.color = this.color[this.cells[point.y][point.x]]
+        cell.style.backgroundColor = "#EEEEEE"
         this.isOpened[point.y][point.x] = true
 
         if (this.cells[point.y][point.x] === "m") {
-            console.log("game over")
-            // return
+            this.gameover()
+            return []
         }
 
         if (this.cells[point.y][point.x] === "0") {
@@ -232,11 +260,65 @@ class MineSweeper {
         return Array.from(new Array(y), _ => new Array(x).fill(val));
     }
 
-    isValidIndex(arr, point) {
+    isValidIndex(arr, point) 
+    {
         return  point.x >= 0 
                 && point.y >= 0 
                 && point.x < arr[0].length
                 && point.y < arr.length
+    }
+
+    isCleared() 
+    {
+        for (let y=0; y<this.cells.length; y++) {
+            for (let x=0; x<this.cells[y].length; x++) {
+                if (this.cells[y][x] !== "m" && !this.isOpened[y][x]) {
+                    return false
+                }
+                if (this.cells[y][x] === "m" && this.isOpened[y][x]) {
+                    return false
+                }
+            }
+        }
+        return true
+    }
+
+    clear() {
+        this.isOpened = this.generate2dArray(this.cells[0].length, this.cells.length, true)
+        this.showClearNotification()
+    }
+
+    gameover() {
+        this.isOpened = this.generate2dArray(this.cells[0].length, this.cells.length, true)
+        this.showGameOverNotification()
+    }
+
+    showClearNotification()
+    {
+        let clearNotification = document.createElement("div")
+        let deleteButton = document.createElement("button")
+        deleteButton.setAttribute("class", "delete")
+        deleteButton.addEventListener("click", (e) => {e.target.parentElement.remove()})
+        clearNotification.appendChild(deleteButton)
+        clearNotification.appendChild(document.createTextNode("🚩ゲームクリア！🚩"))
+        clearNotification.setAttribute("class", "notification is-primary")
+        clearNotification.setAttribute("id", "clear-notification")
+        
+        document.getElementById("form").after(clearNotification)
+    }
+
+    showGameOverNotification()
+    {
+        let clearNotification = document.createElement("div")
+        let deleteButton = document.createElement("button")
+        deleteButton.setAttribute("class", "delete")
+        deleteButton.addEventListener("click", (e) => {e.target.parentElement.remove()})
+        clearNotification.appendChild(deleteButton)
+        clearNotification.appendChild(document.createTextNode("💣ゲームオーバー💣"))
+        clearNotification.setAttribute("class", "notification is-danger")
+        clearNotification.setAttribute("id", "gameover-notification")
+        
+        document.getElementById("form").after(clearNotification)
     }
 }
 
