@@ -65,13 +65,13 @@ class MineSweeper {
         for (let y=0; y<parameter.height; y++) {
             let tr = document.createElement("tr")
             for (let x=0; x<parameter.width; x++) {
-                    let td = document.createElement("td")
-                    td.appendChild(document.createTextNode(""))
-                    td.setAttribute("class", "button cell")
-                    td.setAttribute("id", (new Point(x, y)).toString())
-                    td.addEventListener("click", (e) => {this.clickCell(e)})
-                    td.oncontextmenu = (e) => {this.rightClickCell(e); return false}
-                    tr.appendChild(td)
+                let td = document.createElement("td")
+                td.appendChild(document.createTextNode(""))
+                td.setAttribute("class", "button cell")
+                td.setAttribute("id", (new Point(x, y)).toString())
+                td.addEventListener("click", (e) => {this.clickCell(e)})
+                td.oncontextmenu = (e) => {this.rightClickCell(e); return false}
+                tr.appendChild(td)
             }
             game.appendChild(tr)
         }
@@ -109,20 +109,28 @@ class MineSweeper {
         }
 
         if (this.isFlagged[point.y][point.x]) {
-            this.clearFlag(point)
+            this.clearCell(point)
             this.isFlagged[point.y][point.x] = false
         } else {
-            this.setFlag(point)
+            this.setCellFlag(point)
         }
     }
     
-    setFlag(point) {
+    setCellFlag(point) {
+        this.clearCell(point)        
         let cell = document.getElementById(point.toString())
         cell.appendChild(document.createTextNode("🚩"))
         this.isFlagged[point.y][point.x] = true
     }
+
+    setCellString(point, str) {
+        this.clearCell(point)
+        let cell = document.getElementById(point.toString())
+        cell.style.backgroundColor = "#EEEEEE"
+        cell.appendChild(document.createTextNode(str))
+    }
     
-    clearFlag(point) {
+    clearCell(point) {
         let cell = document.getElementById(point.toString())
         let td = document.createElement("td")
         td.appendChild(document.createTextNode(""))
@@ -284,12 +292,34 @@ class MineSweeper {
     }
 
     clear() {
+        for (let y=0; y<this.cells.length; y++) {
+            for (let x=0; x<this.cells[y].length; x++) {
+                if (this.cells[y][x] === "m") {
+                    this.setCellFlag(new Point(x, y))
+                }
+            }
+        }
+
         this.isOpened = this.generate2dArray(this.cells[0].length, this.cells.length, true)
+
         this.showClearNotification()
     }
 
     gameover() {
+        for (let y=0; y<this.cells.length; y++) {
+            for (let x=0; x<this.cells[y].length; x++) {
+                if (this.cells[y][x] === "m" && !this.isOpened[y][x]) {
+                    this.setCellString(new Point(x, y), "💣")
+                }
+
+                if (this.cells[y][x] !== "m" && this.isFlagged[y][x]) {
+                    this.setCellString(new Point(x, y), "❌")
+                }
+            }
+        }
+
         this.isOpened = this.generate2dArray(this.cells[0].length, this.cells.length, true)
+        
         this.showGameOverNotification()
     }
 
