@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>💣マインスイーパ💣</title>
+    <script src="./js/main.js" async></script>
+    <link rel="stylesheet" href="./css/main.css"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+</head>
+
+<body class="box">
+    <wrapper>
+        <div>
+            <h1 class="title"> 💣マインスイーパ💣 </h1>
+        <div>
+        <div class="box" id="form">
+            <div class="block">
+                <p>mines: <input class="input" id="mines_input" type="number" name="mines" max="99" min="10" value="10"/></p>
+            </div>
+            <div class="block">
+                <p>width: <input class="input" id="width_input" type="number" name="width" max="70" min="10" value="10"/></p>
+            </div>
+            <div class="block">
+                <p>height: <input class="input" id="height_input" type="number" name="height" max="70" min="10" value="10"/></p>
+            </div>
+            <div class="block">
+                <p><button class="button" id="reset_button">reset</button></p>
+            </div>
+        </div>
+        <div class="box" id="game"> 
+            <div id="field"></div>
+        </div>
+    </wrapper>
+</body>
