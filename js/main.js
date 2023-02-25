@@ -336,7 +336,8 @@ class MineSweeper {
         return true
     }
 
-    clear() {
+    clear()
+    {
         for (let y=0; y<this.cells.length; y++) {
             for (let x=0; x<this.cells[y].length; x++) {
                 if (this.cells[y][x] === Cell.MINE) {
@@ -350,10 +351,11 @@ class MineSweeper {
         this.showClearNotification()
     }
 
-    gameover() {
+    gameover()
+    {
         for (let y=0; y<this.cells.length; y++) {
             for (let x=0; x<this.cells[y].length; x++) {
-                if (this.cells[y][x] === Cell.MINE && !this.isOpened[y][x]) {
+                if (this.cells[y][x] === Cell.MINE && !this.isOpened[y][x] && !this.isFlagged[y][x]) {
                     this.setCellString(new Point(x, y), "💣")
                 }
 
